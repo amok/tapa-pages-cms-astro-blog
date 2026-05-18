@@ -12,14 +12,14 @@ content:
     type: collection
     path: src/content/blog
     format: yaml-frontmatter
-    filename:
-      template: "{primary}.md"
-      field: create
+    filename: "{primary}.md"
     view:
       primary: title
-      fields: [pubDatetime, draft, featured, tags]
-      sort: pubDatetime
-      order: desc
+      fields: [title, pubDatetime, draft, featured, tags]
+      sort: [pubDatetime, title]
+      default:
+        sort: pubDatetime
+        order: desc
     fields:
       - name: title
         label: Title
