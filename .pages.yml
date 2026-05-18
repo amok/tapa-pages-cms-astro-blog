@@ -1,30 +1,102 @@
 media:
-  input: public
-  output: /
+  - name: assets
+    label: Assets
+    input: public/assets
+    output: /assets
+    categories: [image]
+    rename: safe
+
 content:
-  - name: posts
-    label: Posts
+  - name: blog
+    label: Blog posts
     type: collection
     path: src/content/blog
+    format: yaml-frontmatter
+    filename:
+      template: "{primary}.md"
+      field: create
     view:
-      fields: [ title, draft, date ]
+      primary: title
+      fields: [pubDatetime, draft, featured, tags]
+      sort: pubDatetime
+      order: desc
     fields:
-      - { name: author, label: Author, type: string }
-      - { name: pubDatetime, label: Date, type: date }
-      - { name: modDatetime, label: Date, type: date }
-      - { name: title, label: Title, type: string, required: true }
-      - { name: ogImage, label: Title, type: string }
-      - { name: slug, label: Slug, type: string }
-      - { name: featured, label: Featured, type: boolean }
-      - { name: draft, label: Draft, type: boolean }
-      - { name: tags, label: Tags, type: string, list: true }
-      - { name: description, label: Description, type: string }
-      - { name: body, label: Body, type: rich-text }
+      - name: title
+        label: Title
+        type: string
+        required: true
+      - name: description
+        label: Description
+        type: text
+        required: true
+      - name: body
+        label: Body
+        type: rich-text
+        options:
+          format: markdown
+          media: assets
+          path: public/assets
+          rename: safe
+          switcher: true
+      - name: pubDatetime
+        label: Published date
+        type: date
+        required: true
+        options:
+          time: true
+          format: "yyyy-MM-dd'T'HH:mm:ssXXX"
+      - name: modDatetime
+        label: Modified date
+        type: date
+        default: ""
+        options:
+          time: true
+          format: "yyyy-MM-dd'T'HH:mm:ssXXX"
+      - name: author
+        label: Author
+        type: string
+      - name: slug
+        label: Slug
+        type: string
+      - name: featured
+        label: Featured
+        type: boolean
+      - name: draft
+        label: Draft
+        type: boolean
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+      - name: ogImage
+        label: Open graph image
+        type: image
+        options:
+          media: assets
+          path: public/assets
+          extensions: [jpg, jpeg, png, webp]
+      - name: canonicalURL
+        label: Canonical URL
+        type: string
   - name: about
     label: About page
     type: file
     path: src/pages/about.md
+    format: yaml-frontmatter
     fields:
-      - { name: layout, type: string, hidden: true, default: "../layouts/AboutLayout.astro" }
-      - { name: title, label: Title, type: string }
-      - { name: body, label: Body, type: rich-text, options: { input: public/assets, output: /assets } }
+      - name: layout
+        type: string
+        hidden: true
+        default: "../layouts/AboutLayout.astro"
+      - name: title
+        label: Title
+        type: string
+      - name: body
+        label: Body
+        type: rich-text
+        options:
+          format: markdown
+          media: assets
+          path: public/assets
+          rename: safe
+          switcher: true

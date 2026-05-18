@@ -1,0 +1,218 @@
+<style is:global>
+  date-calendar {
+    display: block;
+    margin: 2rem 0;
+    color: rgb(var(--color-text-base));
+  }
+
+  date-calendar .date-calendar {
+    border: 1px solid rgba(var(--color-border), 0.95);
+    border-radius: 0.5rem;
+    background: rgba(var(--color-card), 0.18);
+    padding: 1rem;
+  }
+
+  date-calendar .date-calendar__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  date-calendar .date-calendar__month {
+    margin: 0;
+    color: rgb(var(--color-text-base));
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  date-calendar .date-calendar__selected {
+    color: rgb(var(--color-accent));
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: right;
+  }
+
+  date-calendar .date-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  date-calendar .date-calendar__weekday,
+  date-calendar .date-calendar__day {
+    display: grid;
+    min-height: 2.25rem;
+    place-items: center;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1;
+  }
+
+  date-calendar .date-calendar__weekday {
+    color: rgb(var(--color-text-base));
+    font-weight: 700;
+    opacity: 0.72;
+  }
+
+  date-calendar .date-calendar__day {
+    background: rgba(var(--color-fill), 0.72);
+  }
+
+  date-calendar .date-calendar__day--empty {
+    background: transparent;
+  }
+
+  date-calendar .date-calendar__day--selected {
+    background: rgb(var(--color-accent));
+    color: rgb(var(--color-fill));
+    font-weight: 700;
+  }
+
+  date-calendar[data-invalid="true"] {
+    border-left: 3px solid rgb(var(--color-accent));
+    padding-left: 1rem;
+  }
+</style>
+
+<script>
+  const tagName = "date-calendar";
+
+  function parseDate(value: string | null) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value ?? "");
+
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month, day));
+
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month ||
+      date.getUTCDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  }
+
+  function escapeHtml(value: string) {
+    return value.replace(/[&<>"']/g, character => {
+      const entities: Record<string, string> = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      };
+
+      return entities[character];
+    });
+  }
+
+  if (!customElements.get(tagName)) {
+    customElements.define(
+      tagName,
+      class DateCalendar extends HTMLElement {
+        static get observedAttributes() {
+          return ["date"];
+        }
+
+        connectedCallback() {
+          this.render();
+        }
+
+        attributeChangedCallback() {
+          if (this.isConnected) this.render();
+        }
+
+        render() {
+          const date = parseDate(this.getAttribute("date"));
+
+          if (!date) {
+            this.dataset.invalid = "true";
+            this.textContent = "Date calendar needs a valid YYYY-MM-DD date.";
+            return;
+          }
+
+          delete this.dataset.invalid;
+
+          const locale = document.documentElement.lang || undefined;
+          const year = date.getUTCFullYear();
+          const month = date.getUTCMonth();
+          const selectedDay = date.getUTCDate();
+          const firstDay = new Date(Date.UTC(year, month, 1));
+          const daysInMonth = new Date(
+            Date.UTC(year, month + 1, 0)
+          ).getUTCDate();
+          const monthLabel = new Intl.DateTimeFormat(locale, {
+            month: "long",
+            timeZone: "UTC",
+            year: "numeric",
+          }).format(date);
+          const selectedLabel = new Intl.DateTimeFormat(locale, {
+            dateStyle: "full",
+            timeZone: "UTC",
+          }).format(date);
+          const weekdayFormatter = new Intl.DateTimeFormat(locale, {
+            timeZone: "UTC",
+            weekday: "short",
+          });
+          const weekdays = Array.from({ length: 7 }, (_, index) =>
+            weekdayFormatter.format(new Date(Date.UTC(2023, 0, index + 1)))
+          );
+          const cells = [
+            ...Array.from({ length: firstDay.getUTCDay() }, () => null),
+            ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+          ];
+
+          while (cells.length % 7 !== 0) cells.push(null);
+
+          const weekdayMarkup = weekdays
+            .map(
+              day =>
+                `<div class="date-calendar__weekday">${escapeHtml(day)}</div>`
+            )
+            .join("");
+          const dayMarkup = cells
+            .map(day => {
+              if (!day) {
+                return '<div class="date-calendar__day date-calendar__day--empty" aria-hidden="true"></div>';
+              }
+
+              const selectedClass =
+                day === selectedDay ? " date-calendar__day--selected" : "";
+              const currentAttribute =
+                day === selectedDay ? ' aria-current="date"' : "";
+
+              return `<div class="date-calendar__day${selectedClass}"${currentAttribute}>${day}</div>`;
+            })
+            .join("");
+
+          this.innerHTML = `
+            <div class="date-calendar" role="group" aria-label="${escapeHtml(
+              selectedLabel
+            )}">
+              <div class="date-calendar__header">
+                <p class="date-calendar__month">${escapeHtml(monthLabel)}</p>
+                <time class="date-calendar__selected" datetime="${date
+                  .toISOString()
+                  .slice(0, 10)}">${escapeHtml(selectedLabel)}</time>
+              </div>
+              <div class="date-calendar__grid">
+                ${weekdayMarkup}
+                ${dayMarkup}
+              </div>
+            </div>
+          `;
+        }
+      }
+    );
+  }
+</script>

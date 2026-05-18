@@ -108,6 +108,16 @@ There's one thing to note about headings. The AstroPaper blog posts use title (t
 
 This rule is not mandatory, but highly recommended for visual, accessibility and SEO purposes.
 
+## Calendar date component
+
+Pages CMS edits the post body with a rich-text toolbar. When you need an inline calendar, switch the body field to source mode and paste the component with a `YYYY-MM-DD` date.
+
+```html
+<date-calendar date="2026-05-19"></date-calendar>
+```
+
+<date-calendar date="2026-05-19"></date-calendar>
+
 ## Storing Images for Blog Content
 
 Here are two methods for storing images and displaying them inside a markdown file.
